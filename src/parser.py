@@ -1,11 +1,18 @@
-import os
+import re
 
-log_path = os.path.join("data", "auth.log")
+LOG_PATTERN = re.compile(
+    r"^(\w+\s+\d+\s+\d+:\d+:\d+)\s+(\S+)\s+([\w\-\/]+)(?:\[\d+\])?:\s+(.*)$"
+)
 
-with open(log_path, "r") as file:
-    logs = file.readlines()
+def parse_log_line(line):
+    match = LOG_PATTERN.match(line)
 
-print("=== Linux Logs ===\n")
+    if not match:
+        return None
 
-for log in logs:
-    print(log.strip())
+    return {
+        "timestamp": match.group(1),
+        "hostname": match.group(2),
+        "service": match.group(3),
+        "message": match.group(4)
+    }

@@ -1,3 +1,7 @@
-Aug 07 10:20:01 kali sshd[1234]: Failed password for root from 192.168.1.10 port 22
-Aug 07 10:20:15 kali sshd[1235]: Failed password for admin from 192.168.1.10 port 22
-Aug 07 10:21:10 kali sshd[1236]: Accepted password for sania from 192.168.1.5 port 22
+Aug 10 14:35:21 kali sshd[1234]: Failed password for root from 192.168.1.5
+Aug 10 14:36:15 kali sudo[5678]: user sania executed apt update
+Aug 10 14:37:30 kali systemd[1]: Started Apache Web Server
+Aug 10 14:35:21 kali sshd[1234]: Failed password for root from 192.168.1.100 port 22 ssh2
+Aug 10 14:35:25 kali sshd[1235]: Failed password for root from 192.168.1.100 port 22 ssh2
+Aug 10 14:35:30 kali sshd[1236]: Failed password for root from 192.168.1.100 port 22 ssh2
+Aug 10 14:36:00 kali sshd[1237]: Accepted password for user from 192.168.1.101 port 22 ssh2

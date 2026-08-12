@@ -1,10 +1,16 @@
-from parser import parse_log_line
+from parser import parse_logs
+from detector import detect_failed_logins
 
-LOG_FILE = "../data/auth.log"
+logs = parse_logs("data/auth.log")
 
-with open(LOG_FILE, "r", encoding="utf-8", errors="ignore") as file:
-    for line in file:
-        result = parse_log_line(line.strip())
+print(f"Total Logs Parsed: {len(logs)}")
 
-        if result:
-            print(result)
+suspicious_ips = detect_failed_logins(logs)
+
+print("\n=== Suspicious Failed Login Attempts ===")
+
+if suspicious_ips:
+    for ip, count in suspicious_ips.items():
+        print(f"{ip} -> {count} failed attempts")
+else:
+    print("No suspicious activity detected.")

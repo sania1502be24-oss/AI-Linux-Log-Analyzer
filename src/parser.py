@@ -1,7 +1,7 @@
 import re
 
 LOG_PATTERN = re.compile(
-    r"^(\w+\s+\d+\s+\d+:\d+:\d+)\s+(\S+)\s+([\w\-\/]+)(?:\[\d+\])?:\s+(.*)$"
+    r"^(\w+\s+\d+\s+\d+:\d+:\d+)\s+(\S+)\s+([\w/-]+)(?:\[\d+\])?:\s+(.*)$"
 )
 
 def parse_log_line(line):
@@ -16,3 +16,15 @@ def parse_log_line(line):
         "service": match.group(3),
         "message": match.group(4)
     }
+
+def parse_logs(file_path):
+    logs = []
+
+    with open(file_path, "r") as file:
+        for line in file:
+            parsed = parse_log_line(line.strip())
+
+            if parsed:
+                logs.append(parsed)
+
+    return logs

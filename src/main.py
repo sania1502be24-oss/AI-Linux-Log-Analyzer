@@ -1,5 +1,6 @@
 from parser import parse_logs
 from detector import detect_attacks
+from reporter import generate_report
 
 logs = parse_logs("data/auth.log")
 
@@ -15,6 +16,7 @@ if results["brute_force"]:
 else:
     print("No brute force attacks detected.")
 
+
 print("\n=== INVALID USER ATTACKS ===")
 
 if results["invalid_users"]:
@@ -23,6 +25,7 @@ if results["invalid_users"]:
 else:
     print("No invalid user attacks detected.")
 
+
 print("\n=== ROOT LOGIN ATTEMPTS ===")
 
 if results["root_attempts"]:
@@ -30,3 +33,12 @@ if results["root_attempts"]:
         print(f"[HIGH] {attack}")
 else:
     print("No root login attempts detected.")
+
+
+report = generate_report(results, len(logs))
+
+with open("reports/security_report.txt", "w") as file:
+    file.write(report)
+
+print("\nReport generated successfully!")
+print("Location: reports/security_report.txt")

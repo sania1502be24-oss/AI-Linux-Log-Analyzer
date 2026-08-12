@@ -1,16 +1,32 @@
 from parser import parse_logs
-from detector import detect_failed_logins
+from detector import detect_attacks
 
 logs = parse_logs("data/auth.log")
 
 print(f"Total Logs Parsed: {len(logs)}")
 
-suspicious_ips = detect_failed_logins(logs)
+results = detect_attacks(logs)
 
-print("\n=== Suspicious Failed Login Attempts ===")
+print("\n=== BRUTE FORCE ATTEMPTS ===")
 
-if suspicious_ips:
-    for ip, count in suspicious_ips.items():
-        print(f"{ip} -> {count} failed attempts")
+if results["brute_force"]:
+    for ip, count in results["brute_force"].items():
+        print(f"[HIGH] {ip} -> {count} failed attempts")
 else:
-    print("No suspicious activity detected.")
+    print("No brute force attacks detected.")
+
+print("\n=== INVALID USER ATTACKS ===")
+
+if results["invalid_users"]:
+    for attack in results["invalid_users"]:
+        print(f"[MEDIUM] {attack}")
+else:
+    print("No invalid user attacks detected.")
+
+print("\n=== ROOT LOGIN ATTEMPTS ===")
+
+if results["root_attempts"]:
+    for attack in results["root_attempts"]:
+        print(f"[HIGH] {attack}")
+else:
+    print("No root login attempts detected.")

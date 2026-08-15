@@ -3,6 +3,7 @@ from detector import detect_attacks
 from reporter import generate_report
 from threat_score import calculate_threat_score
 from email_alert import send_alert
+from bruteforce_detector import detect_bruteforce
 
 # Parse logs
 logs = parse_logs("data/auth.log")
@@ -12,12 +13,15 @@ print(f"Total Logs Parsed: {len(logs)}")
 # Detect attacks
 results = detect_attacks(logs)
 
+# Day 10: Detect brute force attacks
+bruteforce_alerts = detect_bruteforce(logs)
+
 # Calculate threat score
 threat_score = calculate_threat_score(results)
 
 print(f"\nOverall Threat Score: {threat_score}/100")
 
-# Brute Force Attacks
+# Existing Brute Force Detection
 print("\n=== BRUTE FORCE ATTEMPTS ===")
 
 if results["brute_force"]:
@@ -25,6 +29,19 @@ if results["brute_force"]:
         print(f"[HIGH] {ip} -> {count} failed attempts")
 else:
     print("No brute force attacks detected.")
+
+# Day 10 Advanced Brute Force Detection
+print("\n=== ADVANCED BRUTE FORCE DETECTION ===")
+
+if bruteforce_alerts:
+    for attack in bruteforce_alerts:
+        print(
+            f"[{attack['severity']}] "
+            f"{attack['ip']} "
+            f"({attack['attempts']} attempts)"
+        )
+else:
+    print("No advanced brute force attacks detected.")
 
 # Invalid User Attacks
 print("\n=== INVALID USER ATTACKS ===")
@@ -76,7 +93,8 @@ high_count = (
     len(results["brute_force"]) +
     len(results["root_attempts"]) +
     len(results["sudo_abuse"]) +
-    len(results["privilege_escalation"])
+    len(results["privilege_escalation"]) +
+    len(bruteforce_alerts)
 )
 
 medium_count = len(results["invalid_users"])

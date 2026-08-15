@@ -81,6 +81,29 @@ with col3:
 with col4:
     st.metric("🟡 Medium Threats", medium_threats)
 
+# =========================
+# SECURITY STATUS
+# =========================
+
+st.markdown("---")
+
+if threat_score >= 70:
+    st.error("🔴 CRITICAL SECURITY RISK DETECTED")
+elif threat_score >= 40:
+    st.warning("🟠 MEDIUM SECURITY RISK DETECTED")
+else:
+    st.success("🟢 SYSTEM APPEARS SECURE")
+
+# =========================
+# THREAT SCORE BAR
+# =========================
+
+st.subheader("🎯 Threat Score")
+
+st.progress(threat_score / 100)
+
+st.write(f"Current Threat Score: {threat_score}/100")
+
 st.markdown("---")
 
 # =========================
@@ -128,7 +151,30 @@ st.write(f"Threat Score: {threat_score}/100")
 st.write(f"High Severity Threats: {high_threats}")
 st.write(f"Medium Severity Threats: {medium_threats}")
 
+# =========================
+# SECURITY OVERVIEW
+# =========================
+
 st.markdown("---")
+
+st.subheader("📋 Security Overview")
+
+overview = pd.DataFrame({
+    "Metric": [
+        "Total Logs",
+        "Threat Score",
+        "High Threats",
+        "Medium Threats"
+    ],
+    "Value": [
+        total_logs,
+        threat_score,
+        high_threats,
+        medium_threats
+    ]
+})
+
+st.table(overview)
 
 # =========================
 # ALERTS DATASET
@@ -190,6 +236,8 @@ if not alerts_df.empty:
 # ALERTS SECTION
 # =========================
 
+st.markdown("---")
+
 st.subheader("🚨 Recent Security Alerts")
 
 st.metric(
@@ -202,19 +250,56 @@ st.dataframe(
     use_container_width=True
 )
 
+# =========================
+# TOP ATTACKER IPS
+# =========================
+
 st.markdown("---")
+
+st.subheader("🌐 Top Attacker IPs")
+
+attacker_ips = []
+
+for ip, count in results["brute_force"].items():
+    attacker_ips.append({
+        "IP Address": ip,
+        "Attempts": count
+    })
+
+if attacker_ips:
+    attacker_df = pd.DataFrame(attacker_ips)
+
+    st.dataframe(
+        attacker_df,
+        use_container_width=True
+    )
+else:
+    st.info("No attacker IPs detected.")
 
 # =========================
 # RECENT LOG ENTRIES
 # =========================
 
+st.markdown("---")
+
 st.subheader("📜 Recent Log Entries")
 
 if logs:
     log_df = pd.DataFrame(logs)
+
     st.dataframe(
         log_df,
         use_container_width=True
     )
 else:
     st.warning("No logs found.")
+
+# =========================
+# FOOTER
+# =========================
+
+st.markdown("---")
+
+st.caption(
+    "AI Linux Log Analyzer | SOC Dashboard | Cybersecurity Monitoring Platform"
+)

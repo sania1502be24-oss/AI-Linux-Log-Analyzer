@@ -1,24 +1,63 @@
 # AI Linux Log Analyzer
 
-## Overview
+AI Linux Log Analyzer is a cybersecurity-focused project that analyzes Linux authentication logs (`auth.log`) to identify suspicious activities, calculate threat scores, and generate automated security reports.
 
-AI Linux Log Analyzer is a cybersecurity project designed to analyze Linux authentication logs and identify potential security threats. The system parses log files, detects suspicious activities such as brute-force attacks, invalid user enumeration attempts, and root login attempts, classifies threats based on severity, and generates automated security reports.
-
-This project simulates the functionality of a basic Security Information and Event Management (SIEM) system and helps security analysts monitor Linux systems for malicious activity.
+The project is designed to simulate real-world Security Operations Center (SOC) workflows by detecting common attack patterns such as brute-force attacks, invalid user enumeration, root logins, sudo abuse, and privilege escalation attempts.
 
 ---
 
 ## Features
 
-* Parse Linux authentication logs (`auth.log`)
-* Detect failed SSH login attempts
-* Identify brute-force attacks
-* Detect invalid user enumeration attacks
-* Detect root login attempts
-* Classify threats by severity level
-* Generate automated security reports
-* Structured log analysis workflow
-* Extensible architecture for future AI-based threat detection
+### Log Parsing
+- Parses Linux authentication logs (`auth.log`)
+- Extracts timestamps, services, and log messages
+- Handles multiple log entries efficiently
+
+### Threat Detection
+- Failed Login Detection
+- Brute Force Attack Detection
+- Invalid User Detection
+- Root Login Detection
+- Sudo Abuse Detection
+- Privilege Escalation Detection
+
+### Threat Scoring
+- Calculates an overall threat score (0–100)
+- Weighs threats based on severity
+- Helps prioritize security incidents
+
+### Automated Security Reports
+- Generates detailed security reports
+- Categorizes threats by severity
+- Summarizes attack activity
+- Stores reports in a dedicated reports directory
+
+---
+
+## Detected Attack Types
+
+| Attack Type | Severity |
+|------------|------------|
+| Failed Login Attempts | Medium |
+| Brute Force Attacks | High |
+| Invalid User Enumeration | Medium |
+| Root Login Attempts | High |
+| Sudo Abuse | High |
+| Privilege Escalation | Critical |
+
+---
+
+## Example Detected Activities
+
+```text
+Failed password for root from 192.168.1.100
+Invalid user admin from 192.168.1.150
+Accepted password for root from 192.168.1.250
+user sania executed sudo su
+user admin executed sudo -i
+usermod -aG sudo test
+chmod 777 /etc/passwd
+```
 
 ---
 
@@ -34,75 +73,49 @@ AI-Linux-Log-Analyzer/
 │   └── security_report.txt
 │
 ├── src/
+│   ├── main.py
 │   ├── parser.py
 │   ├── detector.py
 │   ├── reporter.py
-│   └── main.py
+│   └── threat_score.py
 │
 ├── requirements.txt
-├── .gitignore
-└── README.md
+├── README.md
+└── .gitignore
 ```
-
----
-
-## Technologies Used
-
-* Python 3
-* Regular Expressions (Regex)
-* Collections Module
-* File Handling
-* Cybersecurity Log Analysis
-
----
-
-## Threat Detection Capabilities
-
-### Brute Force Detection
-
-Detects repeated failed login attempts from the same IP address.
-
-### Invalid User Detection
-
-Identifies login attempts targeting non-existent user accounts.
-
-### Root Login Attempt Detection
-
-Monitors attempts to gain access using the root account.
-
-### Severity Classification
-
-| Severity | Description                              |
-| -------- | ---------------------------------------- |
-| High     | Brute-force attacks, Root login attempts |
-| Medium   | Invalid user enumeration attacks         |
 
 ---
 
 ## Installation
 
-Clone the repository:
+### Clone Repository
 
 ```bash
 git clone https://github.com/sania1502be24-oss/AI-Linux-Log-Analyzer.git
 cd AI-Linux-Log-Analyzer
 ```
 
-Create a virtual environment:
+### Create Virtual Environment
 
 ```bash
 python -m venv .venv
 ```
 
-Activate the virtual environment:
+### Activate Virtual Environment
 
-### Windows
+#### Windows
 
-```powershell
-.venv\Scripts\Activate.ps1
+```bash
+.venv\Scripts\activate
 ```
 
-Install dependencies:
+#### Linux / macOS
+
+```bash
+source .venv/bin/activate
+```
+
+### Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -123,7 +136,9 @@ python src/main.py
 ## Sample Output
 
 ```text
-Total Logs Parsed: 13
+Total Logs Parsed: 20
+
+Overall Threat Score: 100/100
 
 === BRUTE FORCE ATTEMPTS ===
 [HIGH] 192.168.1.100 -> 6 failed attempts
@@ -133,87 +148,120 @@ Total Logs Parsed: 13
 [MEDIUM] Invalid user test from 192.168.1.151
 
 === ROOT LOGIN ATTEMPTS ===
-[HIGH] Failed password for root from 192.168.1.100 port 22 ssh2
+[HIGH] Accepted password for root from 192.168.1.250 port 22 ssh2
 
-Report generated successfully!
-Location: reports/security_report.txt
+=== SUDO ABUSE ATTEMPTS ===
+[HIGH] user sania executed sudo su
+[HIGH] user admin executed sudo -i
+[HIGH] user test executed sudo bash
+
+=== PRIVILEGE ESCALATION ATTEMPTS ===
+[CRITICAL] sania executed su root
+[CRITICAL] usermod -aG sudo test
+[CRITICAL] chmod 777 /etc/passwd
 ```
 
 ---
 
-## Security Report Generation
+## Threat Scoring Logic
 
-The analyzer automatically generates a detailed report containing:
+| Threat Type | Score |
+|------------|--------|
+| Failed Login (Brute Force) | 10 per attempt |
+| Invalid User | 5 each |
+| Root Login | 25 each |
+| Sudo Abuse | 15 each |
+| Privilege Escalation | 20 each |
 
-* Threat summary
-* Brute-force attack details
-* Invalid user attack details
-* Root login attempt details
-* Severity classifications
-* Analysis timestamp
+Maximum Threat Score = **100**
 
-Generated report location:
+---
+
+## Security Report Example
+
+The tool automatically generates:
 
 ```text
 reports/security_report.txt
 ```
 
----
+Example sections:
 
-## Future Enhancements
-
-* AI-based anomaly detection
-* Threat scoring engine
-* Streamlit dashboard
-* Interactive charts and visualizations
-* Historical log storage
-* SQLite/PostgreSQL integration
-* Real-time log monitoring
-* Email alert system
-* PDF report export
-* Deployment using Docker
+```text
+THREAT SUMMARY
+BRUTE FORCE ATTACKS
+INVALID USER ATTACKS
+ROOT LOGIN ATTEMPTS
+SUDO ABUSE ATTEMPTS
+PRIVILEGE ESCALATION ATTEMPTS
+```
 
 ---
 
-## Learning Outcomes
+## Development Progress
 
-This project demonstrates practical knowledge of:
+### Completed
 
-* Linux log analysis
-* Security monitoring
-* Threat detection techniques
-* Python programming
-* File parsing and automation
-* SOC analyst workflows
-* SIEM concepts
+- ✅ Day 1: Project Setup
+- ✅ Day 2: Log Parsing Engine
+- ✅ Day 3: Failed Login Detection
+- ✅ Day 4: Brute Force Detection
+- ✅ Day 5: Automated Security Reports
+- ✅ Day 6: Root Login Detection & Threat Scoring
+- ✅ Day 7: Sudo Abuse Detection
+- ✅ Day 8: Privilege Escalation Detection
+
+---
+
+## Upcoming Features
+
+### Detection Enhancements
+- Suspicious IP Intelligence
+- Attack Frequency Analysis
+- Attacker Ranking
+
+### AI Features
+- AI Incident Summary
+- AI-Based Risk Recommendations
+- Threat Prioritization
+
+### Dashboard
+- Interactive Web Dashboard
+- Threat Visualizations
+- Charts and Analytics
+- Real-Time Monitoring
+
+### Deployment
+- FastAPI Backend
+- Docker Support
+- Cloud Deployment
+
+---
+
+## Skills Demonstrated
+
+- Python
+- Cybersecurity
+- Log Analysis
+- Threat Detection
+- Incident Response
+- SOC Workflows
+- Security Automation
+- Report Generation
+- Risk Assessment
 
 ---
 
 ## Author
 
-**Sania Mittal**
-
-B.E. Computer Science Engineering
+**Sania Mittal**  
+B.E. Computer Science Engineering (Cybersecurity)  
 Chitkara University
-Cybersecurity Enthusiast
+
+GitHub: https://github.com/sania1502be24-oss
 
 ---
 
-## Project Status
+## License
 
-🚧 Currently under active development
-
-Completed:
-
-* Day 1: Project Setup & Log Parser
-* Day 2: Structured Log Parsing
-* Day 3: Failed Login Detection
-* Day 4: Attack Classification & Severity Levels
-* Day 5: Automated Security Report Generation
-
-Upcoming:
-
-* Threat Scoring Engine
-* AI-Based Detection
-* Dashboard Development
-* Advanced Reporting
+This project is developed for educational and cybersecurity learning purposes.

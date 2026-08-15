@@ -4,6 +4,7 @@ from reporter import generate_report
 from threat_score import calculate_threat_score
 from email_alert import send_alert
 from bruteforce_detector import detect_bruteforce
+from threat_intelligence import detect_malicious_ips
 
 # Parse logs
 logs = parse_logs("data/auth.log")
@@ -13,8 +14,11 @@ print(f"Total Logs Parsed: {len(logs)}")
 # Detect attacks
 results = detect_attacks(logs)
 
-# Day 10: Detect brute force attacks
+# Day 10 - Advanced Brute Force Detection
 bruteforce_alerts = detect_bruteforce(logs)
+
+# Day 11 - Threat Intelligence Detection
+malicious_ip_alerts = detect_malicious_ips(logs)
 
 # Calculate threat score
 threat_score = calculate_threat_score(results)
@@ -30,7 +34,7 @@ if results["brute_force"]:
 else:
     print("No brute force attacks detected.")
 
-# Day 10 Advanced Brute Force Detection
+# Day 10 - Advanced Brute Force Detection
 print("\n=== ADVANCED BRUTE FORCE DETECTION ===")
 
 if bruteforce_alerts:
@@ -79,6 +83,19 @@ if results["privilege_escalation"]:
 else:
     print("No privilege escalation detected.")
 
+# Day 11 - Threat Intelligence Alerts
+print("\n=== THREAT INTELLIGENCE ALERTS ===")
+
+if malicious_ip_alerts:
+    for alert in malicious_ip_alerts:
+        print(
+            f"[{alert['severity']}] "
+            f"{alert['ip']} -> "
+            f"{alert['reason']}"
+        )
+else:
+    print("No malicious IPs detected.")
+
 # Generate Report
 report = generate_report(results, len(logs))
 
@@ -94,7 +111,8 @@ high_count = (
     len(results["root_attempts"]) +
     len(results["sudo_abuse"]) +
     len(results["privilege_escalation"]) +
-    len(bruteforce_alerts)
+    len(bruteforce_alerts) +
+    len(malicious_ip_alerts)
 )
 
 medium_count = len(results["invalid_users"])
@@ -108,6 +126,9 @@ Threat Score: {threat_score}/100
 
 High Severity Threats: {high_count}
 Medium Severity Threats: {medium_count}
+
+Advanced Brute Force Attacks: {len(bruteforce_alerts)}
+Threat Intelligence Alerts: {len(malicious_ip_alerts)}
 
 Please review the security report immediately.
 """

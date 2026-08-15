@@ -18,3 +18,5 @@ Aug 10 14:40:20 kali sudo[2002]: user test executed sudo bash
 Aug 10 14:45:00 kali su[3000]: sania executed su root
 Aug 10 14:45:10 kali usermod[3001]: usermod -aG sudo test
 Aug 10 14:45:20 kali chmod[3002]: chmod 777 /etc/passwd
+Aug 10 16:00:01 kali sshd[5001]: Failed password for root from 192.168.1.250 port 22 ssh2
+Aug 10 16:00:02 kali sshd[5002]: Failed password for admin from 192.168.1.200 port 22 ssh2

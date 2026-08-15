@@ -1,8 +1,8 @@
 ============================================================
        AI LINUX LOG ANALYZER - SECURITY REPORT
 ============================================================
-Generated: 2026-08-15 23:35:02.169804
-Total Logs Analyzed: 20
+Generated: 2026-08-15 23:45:11.607127
+Total Logs Analyzed: 22
 
 --- THREAT SUMMARY ---
 High Severity Threats: 8

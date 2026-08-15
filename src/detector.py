@@ -20,10 +20,11 @@ def detect_attacks(logs):
         if "Invalid user" in message:
             invalid_users.append(message)
 
-        # Root login attempts
-        if "for root" in message:
+        # Successful root logins
+        if "Accepted password for root" in message:
             root_attempts.append(message)
 
+    # Detect brute-force attacks
     brute_force = {
         ip: count
         for ip, count in Counter(failed_ips).items()

@@ -1,12 +1,13 @@
 ============================================================
        AI LINUX LOG ANALYZER - SECURITY REPORT
 ============================================================
-Generated: 2026-08-12 20:19:07.637540
-Total Logs Analyzed: 13
+Generated: 2026-08-15 14:30:26.947047
+Total Logs Analyzed: 14
 
 --- THREAT SUMMARY ---
-High Severity Threats: 9
+High Severity Threats: 2
 Medium Severity Threats: 2
+Threat Score: 95/100
 
 --- BRUTE FORCE ATTACKS ---
 [HIGH] 192.168.1.100 -> 6 failed login attempts
@@ -16,13 +17,8 @@ Medium Severity Threats: 2
 [MEDIUM] Invalid user test from 192.168.1.151
 
 --- ROOT LOGIN ATTEMPTS ---
-[HIGH] Failed password for root from 192.168.1.5
-[HIGH] Failed password for root from 192.168.1.100 port 22 ssh2
-[HIGH] Failed password for root from 192.168.1.100 port 22 ssh2
-[HIGH] Failed password for root from 192.168.1.100 port 22 ssh2
-[HIGH] Failed password for root from 192.168.1.100 port 22 ssh2
-[HIGH] Failed password for root from 192.168.1.100 port 22 ssh2
-[HIGH] Failed password for root from 192.168.1.100 port 22 ssh2
-[HIGH] Failed password for root from 192.168.1.200 port 22 ssh2
+[HIGH] Accepted password for root from 192.168.1.250 port 22 ssh2
 
+============================================================
+End of Security Report
 ============================================================

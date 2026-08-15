@@ -1,4 +1,5 @@
 from datetime import datetime
+from threat_score import calculate_threat_score
 
 
 def generate_report(results, total_logs):
@@ -8,6 +9,8 @@ def generate_report(results, total_logs):
 
     high_count = len(brute_force) + len(root_attempts)
     medium_count = len(invalid_users)
+
+    threat_score = calculate_threat_score(results)
 
     report = []
 
@@ -21,6 +24,7 @@ def generate_report(results, total_logs):
     report.append("\n--- THREAT SUMMARY ---")
     report.append(f"High Severity Threats: {high_count}")
     report.append(f"Medium Severity Threats: {medium_count}")
+    report.append(f"Threat Score: {threat_score}/100")
 
     report.append("\n--- BRUTE FORCE ATTACKS ---")
 
@@ -49,5 +53,7 @@ def generate_report(results, total_logs):
         report.append("No root login attempts detected.")
 
     report.append("\n" + "=" * 60)
+    report.append("End of Security Report")
+    report.append("=" * 60)
 
     return "\n".join(report)

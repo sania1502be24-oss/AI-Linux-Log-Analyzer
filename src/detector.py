@@ -5,9 +5,11 @@ def detect_attacks(logs):
     invalid_users = []
     root_attempts = []
     sudo_abuse = []
+    privilege_escalation = []
 
     for log in logs:
         message = log["message"]
+        lower_message = message.lower()
 
         # Failed password attempts
         if "Failed password" in message:
@@ -34,8 +36,20 @@ def detect_attacks(logs):
         ]
 
         for pattern in sudo_patterns:
-            if pattern in message:
+            if pattern in lower_message:
                 sudo_abuse.append(message)
+                break
+
+        # Privilege escalation detection
+        privilege_patterns = [
+            "su root",
+            "usermod -ag sudo",
+            "chmod 777"
+        ]
+
+        for pattern in privilege_patterns:
+            if pattern in lower_message:
+                privilege_escalation.append(message)
                 break
 
     brute_force = {
@@ -48,5 +62,6 @@ def detect_attacks(logs):
         "brute_force": brute_force,
         "invalid_users": invalid_users,
         "root_attempts": root_attempts,
-        "sudo_abuse": sudo_abuse
+        "sudo_abuse": sudo_abuse,
+        "privilege_escalation": privilege_escalation
     }

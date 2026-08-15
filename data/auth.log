@@ -15,3 +15,6 @@ Aug 10 14:37:00 kali sshd[1240]: Accepted password for root from 192.168.1.250 p
 Aug 10 14:40:00 kali sudo[2000]: user sania executed sudo su
 Aug 10 14:40:10 kali sudo[2001]: user admin executed sudo -i
 Aug 10 14:40:20 kali sudo[2002]: user test executed sudo bash
+Aug 10 14:45:00 kali su[3000]: sania executed su root
+Aug 10 14:45:10 kali usermod[3001]: usermod -aG sudo test
+Aug 10 14:45:20 kali chmod[3002]: chmod 777 /etc/passwd

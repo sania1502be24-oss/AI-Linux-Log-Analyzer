@@ -1,11 +1,11 @@
 ============================================================
        AI LINUX LOG ANALYZER - SECURITY REPORT
 ============================================================
-Generated: 2026-08-15 14:41:07.889578
-Total Logs Analyzed: 17
+Generated: 2026-08-15 14:54:28.350631
+Total Logs Analyzed: 20
 
 --- THREAT SUMMARY ---
-High Severity Threats: 5
+High Severity Threats: 8
 Medium Severity Threats: 2
 Threat Score: 100/100
 
@@ -23,6 +23,11 @@ Threat Score: 100/100
 [HIGH] user sania executed sudo su
 [HIGH] user admin executed sudo -i
 [HIGH] user test executed sudo bash
+
+--- PRIVILEGE ESCALATION ATTEMPTS ---
+[CRITICAL] sania executed su root
+[CRITICAL] usermod -aG sudo test
+[CRITICAL] chmod 777 /etc/passwd
 
 ============================================================
 End of Security Report

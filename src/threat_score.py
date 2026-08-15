@@ -14,6 +14,9 @@ def calculate_threat_score(results):
     # Sudo abuse
     score += len(results["sudo_abuse"]) * 15
 
+    # Privilege escalation
+    score += len(results["privilege_escalation"]) * 20
+
     if score > 100:
         score = 100
 

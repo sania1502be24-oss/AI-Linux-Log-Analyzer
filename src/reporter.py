@@ -7,11 +7,13 @@ def generate_report(results, total_logs):
     invalid_users = results["invalid_users"]
     root_attempts = results["root_attempts"]
     sudo_abuse = results["sudo_abuse"]
+    privilege_escalation = results["privilege_escalation"]
 
     high_count = (
         len(brute_force)
         + len(root_attempts)
         + len(sudo_abuse)
+        + len(privilege_escalation)
     )
 
     medium_count = len(invalid_users)
@@ -65,6 +67,14 @@ def generate_report(results, total_logs):
             report.append(f"[HIGH] {attack}")
     else:
         report.append("No sudo abuse detected.")
+
+    report.append("\n--- PRIVILEGE ESCALATION ATTEMPTS ---")
+
+    if privilege_escalation:
+        for attack in privilege_escalation:
+            report.append(f"[CRITICAL] {attack}")
+    else:
+        report.append("No privilege escalation detected.")
 
     report.append("\n" + "=" * 60)
     report.append("End of Security Report")

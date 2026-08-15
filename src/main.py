@@ -59,3 +59,10 @@ if results["sudo_abuse"]:
         print(f"[HIGH] {attack}")
 else:
     print("No sudo abuse detected.")
+    print("\n=== PRIVILEGE ESCALATION ATTEMPTS ===")
+
+if results["privilege_escalation"]:
+    for attack in results["privilege_escalation"]:
+        print(f"[CRITICAL] {attack}")
+else:
+    print("No privilege escalation detected.")

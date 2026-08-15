@@ -5,6 +5,7 @@ from threat_score import calculate_threat_score
 from email_alert import send_alert
 from bruteforce_detector import detect_bruteforce
 from threat_intelligence import detect_malicious_ips
+from pdf_report import generate_pdf_report
 
 # Parse logs
 logs = parse_logs("data/auth.log")
@@ -133,3 +134,12 @@ Threat Intelligence Alerts: {len(malicious_ip_alerts)}
 Please review the security report immediately.
 """
     )
+generate_pdf_report(
+    total_logs=len(logs),
+    threat_score=threat_score,
+    high_threats=high_count,
+    medium_threats=medium_count
+)
+
+print("PDF report generated successfully!")
+print("Location: reports/security_report.pdf")

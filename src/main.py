@@ -2,6 +2,7 @@ from parser import parse_logs
 from detector import detect_attacks
 from reporter import generate_report
 from threat_score import calculate_threat_score
+from email_alert import send_alert
 
 # Parse logs
 logs = parse_logs("data/auth.log")
@@ -43,6 +44,24 @@ if results["root_attempts"]:
 else:
     print("No root login attempts detected.")
 
+# Sudo Abuse Attempts
+print("\n=== SUDO ABUSE ATTEMPTS ===")
+
+if results["sudo_abuse"]:
+    for attack in results["sudo_abuse"]:
+        print(f"[HIGH] {attack}")
+else:
+    print("No sudo abuse detected.")
+
+# Privilege Escalation Attempts
+print("\n=== PRIVILEGE ESCALATION ATTEMPTS ===")
+
+if results["privilege_escalation"]:
+    for attack in results["privilege_escalation"]:
+        print(f"[CRITICAL] {attack}")
+else:
+    print("No privilege escalation detected.")
+
 # Generate Report
 report = generate_report(results, len(logs))
 
@@ -52,17 +71,26 @@ with open("reports/security_report.txt", "w") as file:
 print("\nReport generated successfully!")
 print("Location: reports/security_report.txt")
 
-print("\n=== SUDO ABUSE ATTEMPTS ===")
+# Calculate threat counts
+high_count = (
+    len(results["brute_force"]) +
+    len(results["root_attempts"]) +
+    len(results["sudo_abuse"]) +
+    len(results["privilege_escalation"])
+)
 
-if results["sudo_abuse"]:
-    for attack in results["sudo_abuse"]:
-        print(f"[HIGH] {attack}")
-else:
-    print("No sudo abuse detected.")
-    print("\n=== PRIVILEGE ESCALATION ATTEMPTS ===")
+medium_count = len(results["invalid_users"])
 
-if results["privilege_escalation"]:
-    for attack in results["privilege_escalation"]:
-        print(f"[CRITICAL] {attack}")
-else:
-    print("No privilege escalation detected.")
+# Send email alert for high threat score
+if threat_score >= 70:
+    send_alert(
+        "HIGH RISK SECURITY ALERT",
+        f"""
+Threat Score: {threat_score}/100
+
+High Severity Threats: {high_count}
+Medium Severity Threats: {medium_count}
+
+Please review the security report immediately.
+"""
+    )

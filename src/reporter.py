@@ -6,8 +6,14 @@ def generate_report(results, total_logs):
     brute_force = results["brute_force"]
     invalid_users = results["invalid_users"]
     root_attempts = results["root_attempts"]
+    sudo_abuse = results["sudo_abuse"]
 
-    high_count = len(brute_force) + len(root_attempts)
+    high_count = (
+        len(brute_force)
+        + len(root_attempts)
+        + len(sudo_abuse)
+    )
+
     medium_count = len(invalid_users)
 
     threat_score = calculate_threat_score(results)
@@ -51,6 +57,14 @@ def generate_report(results, total_logs):
             report.append(f"[HIGH] {attack}")
     else:
         report.append("No root login attempts detected.")
+
+    report.append("\n--- SUDO ABUSE ATTEMPTS ---")
+
+    if sudo_abuse:
+        for attack in sudo_abuse:
+            report.append(f"[HIGH] {attack}")
+    else:
+        report.append("No sudo abuse detected.")
 
     report.append("\n" + "=" * 60)
     report.append("End of Security Report")

@@ -4,6 +4,7 @@ def detect_attacks(logs):
     failed_ips = []
     invalid_users = []
     root_attempts = []
+    sudo_abuse = []
 
     for log in logs:
         message = log["message"]
@@ -24,7 +25,19 @@ def detect_attacks(logs):
         if "Accepted password for root" in message:
             root_attempts.append(message)
 
-    # Detect brute-force attacks
+        # Sudo abuse detection
+        sudo_patterns = [
+            "sudo su",
+            "sudo -i",
+            "sudo bash",
+            "sudo sh"
+        ]
+
+        for pattern in sudo_patterns:
+            if pattern in message:
+                sudo_abuse.append(message)
+                break
+
     brute_force = {
         ip: count
         for ip, count in Counter(failed_ips).items()
@@ -34,5 +47,6 @@ def detect_attacks(logs):
     return {
         "brute_force": brute_force,
         "invalid_users": invalid_users,
-        "root_attempts": root_attempts
+        "root_attempts": root_attempts,
+        "sudo_abuse": sudo_abuse
     }

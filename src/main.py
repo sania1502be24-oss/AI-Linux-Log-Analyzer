@@ -51,3 +51,11 @@ with open("reports/security_report.txt", "w") as file:
 
 print("\nReport generated successfully!")
 print("Location: reports/security_report.txt")
+
+print("\n=== SUDO ABUSE ATTEMPTS ===")
+
+if results["sudo_abuse"]:
+    for attack in results["sudo_abuse"]:
+        print(f"[HIGH] {attack}")
+else:
+    print("No sudo abuse detected.")

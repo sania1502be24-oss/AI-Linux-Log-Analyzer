@@ -8,8 +8,11 @@ def calculate_threat_score(results):
     # Invalid users
     score += len(results["invalid_users"]) * 5
 
-    # Root logins (HIGH severity)
+    # Root logins
     score += len(results["root_attempts"]) * 25
+
+    # Sudo abuse
+    score += len(results["sudo_abuse"]) * 15
 
     if score > 100:
         score = 100

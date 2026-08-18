@@ -55,13 +55,18 @@ threat_score = calculate_threat_score(results)
 total_logs = len(logs)
 
 high_threats = (
-    len(results["brute_force"]) +
-    len(results["root_attempts"]) +
-    len(results["sudo_abuse"]) +
-    len(results["privilege_escalation"])
+    len(results.get("brute_force", {})) +
+    len(results.get("root_attempts", [])) +
+    len(results.get("sudo_abuse", []))
 )
 
-medium_threats = len(results["invalid_users"])
+medium_threats = len(
+    results.get("invalid_users", [])
+)
+
+critical_threats = len(
+    results.get("privilege_escalation", [])
+)
 
 # =========================
 # DASHBOARD CARDS
@@ -70,16 +75,28 @@ medium_threats = len(results["invalid_users"])
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.metric("📄 Total Logs", total_logs)
+    st.metric(
+        "📄 Total Logs",
+        total_logs
+    )
 
 with col2:
-    st.metric("⚠️ Threat Score", f"{threat_score}/100")
+    st.metric(
+        "⚠️ Threat Score",
+        f"{threat_score}/100"
+    )
 
 with col3:
-    st.metric("🔴 High Threats", high_threats)
+    st.metric(
+        "🔴 High Threats",
+        high_threats
+    )
 
 with col4:
-    st.metric("🟡 Medium Threats", medium_threats)
+    st.metric(
+        "🟡 Medium Threats",
+        medium_threats
+    )
 
 # =========================
 # SECURITY STATUS
@@ -88,11 +105,19 @@ with col4:
 st.markdown("---")
 
 if threat_score >= 70:
-    st.error("🔴 CRITICAL SECURITY RISK DETECTED")
+    st.error(
+        "🔴 CRITICAL SECURITY RISK DETECTED"
+    )
+
 elif threat_score >= 40:
-    st.warning("🟠 MEDIUM SECURITY RISK DETECTED")
+    st.warning(
+        "🟠 MEDIUM SECURITY RISK DETECTED"
+    )
+
 else:
-    st.success("🟢 SYSTEM APPEARS SECURE")
+    st.success(
+        "🟢 SYSTEM APPEARS SECURE"
+    )
 
 # =========================
 # THREAT SCORE BAR
@@ -100,14 +125,18 @@ else:
 
 st.subheader("🎯 Threat Score")
 
-st.progress(threat_score / 100)
+st.progress(
+    threat_score / 100
+)
 
-st.write(f"Current Threat Score: {threat_score}/100")
+st.write(
+    f"Current Threat Score: {threat_score}/100"
+)
 
 st.markdown("---")
 
 # =========================
-# ATTACK DISTRIBUTION CHART
+# ATTACK DISTRIBUTION
 # =========================
 
 st.subheader("📊 Attack Distribution")
@@ -121,22 +150,34 @@ attack_data = pd.DataFrame({
         "Privilege Escalation"
     ],
     "Count": [
-        len(results["brute_force"]),
-        len(results["invalid_users"]),
-        len(results["root_attempts"]),
-        len(results["sudo_abuse"]),
-        len(results["privilege_escalation"])
+        len(results.get("brute_force", {})),
+        len(results.get("invalid_users", [])),
+        len(results.get("root_attempts", [])),
+        len(results.get("sudo_abuse", [])),
+        len(results.get("privilege_escalation", []))
     ]
 })
 
-fig = px.pie(
-    attack_data,
-    names="Attack Type",
-    values="Count",
-    title="Attack Distribution"
-)
+# Only show chart when attacks exist
+if attack_data["Count"].sum() > 0:
 
-st.plotly_chart(fig, use_container_width=True)
+    fig = px.pie(
+        attack_data,
+        names="Attack Type",
+        values="Count",
+        title="Attack Distribution"
+    )
+
+    st.plotly_chart(
+        fig,
+        width="stretch"
+    )
+
+else:
+
+    st.info(
+        "No attacks detected."
+    )
 
 st.markdown("---")
 
@@ -146,16 +187,37 @@ st.markdown("---")
 
 st.subheader("🚨 Threat Summary")
 
-st.write(f"Total Logs Parsed: {total_logs}")
-st.write(f"Threat Score: {threat_score}/100")
-st.write(f"High Severity Threats: {high_threats}")
-st.write(f"Medium Severity Threats: {medium_threats}")
+summary_col1, summary_col2 = st.columns(2)
+
+with summary_col1:
+
+    st.write(
+        f"📄 **Total Logs Parsed:** {total_logs}"
+    )
+
+    st.write(
+        f"🎯 **Threat Score:** {threat_score}/100"
+    )
+
+    st.write(
+        f"🔴 **High Severity Threats:** {high_threats}"
+    )
+
+with summary_col2:
+
+    st.write(
+        f"🟡 **Medium Severity Threats:** {medium_threats}"
+    )
+
+    st.write(
+        f"🚨 **Critical Threats:** {critical_threats}"
+    )
+
+st.markdown("---")
 
 # =========================
 # SECURITY OVERVIEW
 # =========================
-
-st.markdown("---")
 
 st.subheader("📋 Security Overview")
 
@@ -164,17 +226,23 @@ overview = pd.DataFrame({
         "Total Logs",
         "Threat Score",
         "High Threats",
-        "Medium Threats"
+        "Medium Threats",
+        "Critical Threats"
     ],
     "Value": [
         total_logs,
         threat_score,
         high_threats,
-        medium_threats
+        medium_threats,
+        critical_threats
     ]
 })
 
-st.table(overview)
+st.dataframe(
+    overview,
+    width="stretch",
+    hide_index=True
+)
 
 # =========================
 # ALERTS DATASET
@@ -182,35 +250,101 @@ st.table(overview)
 
 alerts = []
 
-for attack in results["invalid_users"]:
+# =========================
+# BRUTE FORCE ALERTS
+# =========================
+
+for ip, count in results.get(
+    "brute_force",
+    {}
+).items():
+
+    alerts.append({
+        "Severity": "HIGH",
+        "Type": "Brute Force",
+        "Source": ip,
+        "Message": (
+            f"{ip} -> {count} failed login attempts"
+        )
+    })
+
+# =========================
+# INVALID USER ALERTS
+# =========================
+
+for attack in results.get(
+    "invalid_users",
+    []
+):
+
     alerts.append({
         "Severity": "MEDIUM",
         "Type": "Invalid User",
+        "Source": "Unknown",
         "Message": attack
     })
 
-for attack in results["root_attempts"]:
+# =========================
+# ROOT LOGIN ALERTS
+# =========================
+
+for attack in results.get(
+    "root_attempts",
+    []
+):
+
     alerts.append({
         "Severity": "HIGH",
         "Type": "Root Login",
+        "Source": "Unknown",
         "Message": attack
     })
 
-for attack in results["sudo_abuse"]:
+# =========================
+# SUDO ABUSE ALERTS
+# =========================
+
+for attack in results.get(
+    "sudo_abuse",
+    []
+):
+
     alerts.append({
         "Severity": "HIGH",
         "Type": "Sudo Abuse",
+        "Source": "Local User",
         "Message": attack
     })
 
-for attack in results["privilege_escalation"]:
+# =========================
+# PRIVILEGE ESCALATION
+# =========================
+
+for attack in results.get(
+    "privilege_escalation",
+    []
+):
+
     alerts.append({
         "Severity": "CRITICAL",
         "Type": "Privilege Escalation",
+        "Source": "Local User",
         "Message": attack
     })
 
-alerts_df = pd.DataFrame(alerts)
+# =========================
+# CREATE ALERT DATAFRAME
+# =========================
+
+alerts_df = pd.DataFrame(
+    alerts,
+    columns=[
+        "Severity",
+        "Type",
+        "Source",
+        "Message"
+    ]
+)
 
 # =========================
 # APPLY FILTERS
@@ -218,12 +352,16 @@ alerts_df = pd.DataFrame(alerts)
 
 if not alerts_df.empty:
 
+    # Severity filter
     if severity_filter != "All":
+
         alerts_df = alerts_df[
             alerts_df["Severity"] == severity_filter
         ]
 
+    # Search filter
     if search_term:
+
         alerts_df = alerts_df[
             alerts_df["Message"].str.contains(
                 search_term,
@@ -233,66 +371,154 @@ if not alerts_df.empty:
         ]
 
 # =========================
-# ALERTS SECTION
+# SECURITY ALERTS
 # =========================
 
 st.markdown("---")
 
-st.subheader("🚨 Recent Security Alerts")
+st.subheader(
+    "🚨 Recent Security Alerts"
+)
 
 st.metric(
     "Displayed Alerts",
     len(alerts_df)
 )
 
-st.dataframe(
-    alerts_df,
-    use_container_width=True
-)
+if not alerts_df.empty:
+
+    st.dataframe(
+        alerts_df,
+        width="stretch",
+        hide_index=True
+    )
+
+else:
+
+    st.success(
+        "No security alerts match the selected filters."
+    )
 
 # =========================
-# TOP ATTACKER IPS
+# ALERT SEVERITY DISTRIBUTION
 # =========================
 
 st.markdown("---")
 
-st.subheader("🌐 Top Attacker IPs")
+st.subheader("🚦 Alert Severity Distribution")
+
+if not alerts_df.empty:
+
+    severity_data = (
+        alerts_df["Severity"]
+        .value_counts()
+        .reset_index()
+    )
+
+    severity_data.columns = [
+        "Severity",
+        "Count"
+    ]
+
+    severity_fig = px.bar(
+        severity_data,
+        x="Severity",
+        y="Count",
+        title="Security Alerts by Severity",
+        text="Count"
+    )
+
+    severity_fig.update_layout(
+        xaxis_title="Severity",
+        yaxis_title="Number of Alerts"
+    )
+
+    st.plotly_chart(
+        severity_fig,
+        width="stretch"
+    )
+
+else:
+
+    st.info(
+        "No alerts available for severity analysis."
+    )
+
+# =========================
+# THREAT INTELLIGENCE
+# =========================
+
+st.markdown("---")
+
+st.subheader("🕵️ Threat Intelligence - Attacker Risk")
 
 attacker_ips = []
 
-for ip, count in results["brute_force"].items():
+for ip, count in results.get("brute_force", {}).items():
+
+    if count >= 10:
+        risk = "CRITICAL"
+
+    elif count >= 5:
+        risk = "HIGH"
+
+    elif count >= 3:
+        risk = "MEDIUM"
+
+    else:
+        risk = "LOW"
+
     attacker_ips.append({
         "IP Address": ip,
-        "Attempts": count
+        "Failed Attempts": count,
+        "Risk Level": risk
     })
 
 if attacker_ips:
-    attacker_df = pd.DataFrame(attacker_ips)
+
+    threat_df = pd.DataFrame(attacker_ips)
+
+    threat_df = threat_df.sort_values(
+        by="Failed Attempts",
+        ascending=False
+    )
 
     st.dataframe(
-        attacker_df,
-        use_container_width=True
+        threat_df,
+        width="stretch",
+        hide_index=True
     )
-else:
-    st.info("No attacker IPs detected.")
 
+else:
+
+    st.success(
+        "🟢 No attacker IPs detected."
+    )
 # =========================
 # RECENT LOG ENTRIES
 # =========================
 
 st.markdown("---")
 
-st.subheader("📜 Recent Log Entries")
+st.subheader(
+    "📜 Recent Log Entries"
+)
 
 if logs:
+
     log_df = pd.DataFrame(logs)
 
     st.dataframe(
         log_df,
-        use_container_width=True
+        width="stretch",
+        hide_index=True
     )
+
 else:
-    st.warning("No logs found.")
+
+    st.warning(
+        "No logs found."
+    )
 
 # =========================
 # FOOTER
@@ -301,5 +527,7 @@ else:
 st.markdown("---")
 
 st.caption(
-    "AI Linux Log Analyzer | SOC Dashboard | Cybersecurity Monitoring Platform"
+    "AI Linux Log Analyzer | "
+    "SOC Dashboard | "
+    "Cybersecurity Monitoring Platform"
 )

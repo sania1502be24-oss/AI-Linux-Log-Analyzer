@@ -72,7 +72,7 @@ critical_threats = len(
 # DASHBOARD CARDS
 # =========================
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
     st.metric(
@@ -96,6 +96,12 @@ with col4:
     st.metric(
         "🟡 Medium Threats",
         medium_threats
+    )
+
+with col5:
+    st.metric(
+        "🚨 Critical Threats",
+        critical_threats
     )
 
 # =========================
@@ -124,6 +130,11 @@ else:
 # =========================
 
 st.subheader("🎯 Threat Score")
+
+st.markdown(
+    f"### Current Risk Level: "
+    f"{'🔴 CRITICAL' if threat_score >= 70 else '🟠 MEDIUM' if threat_score >= 40 else '🟢 LOW'}"
+)
 
 st.progress(
     threat_score / 100
@@ -400,6 +411,33 @@ else:
     )
 
 # =========================
+# EXPORT SECURITY ALERTS
+# =========================
+
+st.markdown("---")
+
+st.subheader("📥 Export Security Alerts")
+
+if not alerts_df.empty:
+
+    csv_data = alerts_df.to_csv(
+        index=False
+    ).encode("utf-8")
+
+    st.download_button(
+        label="📥 Download Alerts as CSV",
+        data=csv_data,
+        file_name="security_alerts.csv",
+        mime="text/csv"
+    )
+
+else:
+
+    st.info(
+        "No alerts available for export."
+    )
+
+# =========================
 # ALERT SEVERITY DISTRIBUTION
 # =========================
 
@@ -493,6 +531,187 @@ else:
 
     st.success(
         "🟢 No attacker IPs detected."
+    )   
+
+# =========================
+# TOP ATTACKER IPS
+# =========================
+
+st.markdown("---")
+
+st.subheader("🌐 Top Attacker IPs")
+
+if attacker_ips:
+
+    top_ips_df = pd.DataFrame(attacker_ips)
+
+    top_ips_df = top_ips_df.sort_values(
+        by="Failed Attempts",
+        ascending=False
+    ).head(10)
+
+    attacker_fig = px.bar(
+        top_ips_df,
+        x="IP Address",
+        y="Failed Attempts",
+        title="Top 10 Attacker IPs",
+        text="Failed Attempts"
+    )
+
+    attacker_fig.update_layout(
+        xaxis_title="Attacker IP",
+        yaxis_title="Failed Login Attempts"
+    )
+
+    st.plotly_chart(
+        attacker_fig,
+        width="stretch"
+    )
+
+else:
+
+    st.info(
+        "No attacker IPs available."
+    )
+
+# =========================
+# THREAT ACTIVITY TIMELINE
+# =========================
+
+st.markdown("---")
+
+st.subheader("📈 Threat Activity Timeline")
+
+if logs:
+
+    timeline_df = pd.DataFrame(logs)
+
+    # Check whether timestamp exists
+    if "timestamp" in timeline_df.columns:
+
+        timeline_df["timestamp"] = pd.to_datetime(
+            timeline_df["timestamp"],
+            errors="coerce"
+        )
+
+        timeline_df = timeline_df.dropna(
+            subset=["timestamp"]
+        )
+
+        if not timeline_df.empty:
+
+            timeline_df["Time"] = timeline_df[
+                "timestamp"
+            ].dt.strftime("%H:%M")
+
+            activity = (
+                timeline_df
+                .groupby("Time")
+                .size()
+                .reset_index(name="Events")
+            )
+
+            timeline_fig = px.line(
+                activity,
+                x="Time",
+                y="Events",
+                markers=True,
+                title="Log Activity Over Time"
+            )
+
+            timeline_fig.update_layout(
+                xaxis_title="Time",
+                yaxis_title="Number of Events"
+            )
+
+            st.plotly_chart(
+                timeline_fig,
+                width="stretch"
+            )
+
+        else:
+
+            st.info(
+                "No valid timestamps available for timeline analysis."
+            )
+
+    else:
+
+        st.info(
+            "Timestamp field not available in log data."
+        )
+
+else:
+
+    st.info(
+        "No logs available for timeline analysis."
+    )
+
+# =========================
+# IP INVESTIGATION
+# =========================
+
+st.markdown("---")
+
+st.subheader("🔎 IP Investigation")
+
+if attacker_ips:
+
+    investigation_df = pd.DataFrame(attacker_ips)
+
+    selected_ip = st.selectbox(
+        "Select an IP Address to investigate",
+        investigation_df["IP Address"].tolist()
+    )
+
+    selected_data = investigation_df[
+        investigation_df["IP Address"] == selected_ip
+    ].iloc[0]
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "🌐 IP Address",
+            selected_ip
+        )
+
+    with col2:
+        st.metric(
+            "🔐 Failed Attempts",
+            selected_data["Failed Attempts"]
+        )
+
+    with col3:
+        st.metric(
+            "⚠️ Risk Level",
+            selected_data["Risk Level"]
+        )
+
+    st.markdown("### 📋 Investigation Details")
+
+    ip_alerts = alerts_df[
+        alerts_df["Source"] == selected_ip
+    ]
+
+    if not ip_alerts.empty:
+
+        st.dataframe(
+            ip_alerts,
+            width="stretch",
+            hide_index=True
+        )
+
+    else:
+
+        st.info(
+            "No additional alerts found for this IP."
+        )
+
+else:
+
+    st.info(
+        "No attacker IPs available for investigation."
     )
 # =========================
 # RECENT LOG ENTRIES

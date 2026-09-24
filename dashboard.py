@@ -6,6 +6,7 @@ import pandas as pd
 from src.parser import parse_logs
 from src.detector import detect_attacks
 from src.threat_score import calculate_threat_score
+from src.pdf_report import generate_pdf_report
 
 
 # ============================================================
@@ -27,6 +28,7 @@ st.set_page_config(
 st.markdown(
     """
     <style>
+
         .main-title {
             font-size: 2.4rem;
             font-weight: 700;
@@ -50,6 +52,7 @@ st.markdown(
             padding: 12px;
             border-radius: 10px;
         }
+
     </style>
     """,
     unsafe_allow_html=True
@@ -79,26 +82,37 @@ st.markdown(
 
 st.sidebar.title("⚙️ Dashboard Controls")
 
-st.sidebar.markdown(
-    "Use the controls below to investigate detected security events."
-)
 
 severity_filter = st.sidebar.selectbox(
-    "Alert Severity",
-    ["All", "HIGH", "MEDIUM", "CRITICAL"]
+    "Severity Filter",
+    [
+        "All",
+        "HIGH",
+        "MEDIUM",
+        "CRITICAL"
+    ]
 )
 
-search_term = st.sidebar.text_input(
-    "Search Alerts",
-    placeholder="Search IP, attack type, message..."
+
+search_query = st.sidebar.text_input(
+    "🔎 Search Alerts",
+    ""
 )
+
 
 st.sidebar.markdown("---")
 
-st.sidebar.info(
-    "📌 Data Source\n\n"
-    "Linux authentication log\n\n"
-    "`data/auth.log`"
+st.sidebar.markdown(
+    """
+    ### 📊 Data Source
+
+    **Log File**
+
+    `data/auth.log`
+
+    The dashboard analyzes Linux authentication
+    logs for suspicious activity.
+    """
 )
 
 
@@ -107,151 +121,163 @@ st.sidebar.info(
 # ============================================================
 
 try:
-    logs = parse_logs("data/auth.log")
+
+    logs = parse_logs(
+        "data/auth.log"
+    )
+
 except Exception as error:
-    st.error(f"Unable to parse authentication logs: {error}")
-    st.stop()
+
+    st.error(
+        f"Unable to parse log file: {error}"
+    )
+
+    logs = []
 
 
 # ============================================================
-# DETECT ATTACKS
+# DETECT SECURITY EVENTS
 # ============================================================
 
 try:
-    results = detect_attacks(logs)
+
+    results = detect_attacks(
+        logs
+    )
+
 except Exception as error:
-    st.error(f"Attack detection failed: {error}")
-    st.stop()
+
+    st.error(
+        f"Unable to detect security events: {error}"
+    )
+
+    results = {
+        "brute_force": {},
+        "invalid_users": [],
+        "root_attempts": [],
+        "sudo_abuse": [],
+        "privilege_escalation": []
+    }
 
 
 # ============================================================
-# CALCULATE THREAT SCORE
+# EXTRACT ATTACK RESULTS
+# ============================================================
+
+brute_force = results.get(
+    "brute_force",
+    {}
+)
+
+invalid_users = results.get(
+    "invalid_users",
+    []
+)
+
+root_attempts = results.get(
+    "root_attempts",
+    []
+)
+
+sudo_abuse = results.get(
+    "sudo_abuse",
+    []
+)
+
+privilege_escalation = results.get(
+    "privilege_escalation",
+    []
+)
+
+
+# ============================================================
+# THREAT SCORE
 # ============================================================
 
 try:
-    threat_score = calculate_threat_score(results)
-except Exception as error:
-    st.error(f"Threat score calculation failed: {error}")
-    st.stop()
+
+    threat_score = calculate_threat_score(
+        results
+    )
+
+except Exception:
+
+    threat_score = 0
 
 
 # ============================================================
-# BASIC METRICS
+# RISK LEVEL
 # ============================================================
 
-total_logs = len(logs)
+if threat_score >= 80:
+
+    risk_level = "CRITICAL"
+
+elif threat_score >= 60:
+
+    risk_level = "HIGH"
+
+elif threat_score >= 30:
+
+    risk_level = "MEDIUM"
+
+else:
+
+    risk_level = "LOW"
+
+
+# ============================================================
+# ATTACK COUNTS
+# ============================================================
 
 brute_force_count = len(
-    results.get("brute_force", {})
+    brute_force
 )
 
 invalid_user_count = len(
-    results.get("invalid_users", [])
+    invalid_users
 )
 
-root_attempt_count = len(
-    results.get("root_attempts", [])
+root_count = len(
+    root_attempts
 )
 
-sudo_abuse_count = len(
-    results.get("sudo_abuse", [])
+sudo_count = len(
+    sudo_abuse
 )
 
-privilege_escalation_count = len(
-    results.get("privilege_escalation", [])
+privilege_count = len(
+    privilege_escalation
 )
-
-
-high_threats = (
-    brute_force_count
-    + root_attempt_count
-    + sudo_abuse_count
-)
-
-medium_threats = invalid_user_count
-
-critical_threats = privilege_escalation_count
 
 
 total_attacks = (
     brute_force_count
     + invalid_user_count
-    + root_attempt_count
-    + sudo_abuse_count
-    + privilege_escalation_count
-)
-
-
-unique_attacker_ips = len(
-    results.get("brute_force", {})
+    + root_count
+    + sudo_count
+    + privilege_count
 )
 
 
 # ============================================================
-# RISK CLASSIFICATION
+# ATTACKER IP INFORMATION
 # ============================================================
 
-if threat_score >= 70:
-    risk_level = "CRITICAL"
-    risk_message = (
-        "Immediate investigation recommended."
-    )
+attacker_ips = []
 
-elif threat_score >= 40:
-    risk_level = "HIGH"
-    risk_message = (
-        "Suspicious activity requires investigation."
-    )
+for ip, count in brute_force.items():
 
-elif total_attacks > 0:
-    risk_level = "MEDIUM"
-    risk_message = (
-        "Suspicious activity was detected."
-    )
-
-else:
-    risk_level = "LOW"
-    risk_message = (
-        "No significant suspicious activity detected."
-    )
-
-
-# ============================================================
-# TOP METRICS
-# ============================================================
-
-st.markdown("### 📊 Security Overview")
-
-metric1, metric2, metric3, metric4, metric5 = st.columns(5)
-
-with metric1:
-    st.metric(
-        "📄 Logs Parsed",
-        total_logs
-    )
-
-with metric2:
-    st.metric(
-        "🎯 Threat Score",
-        f"{threat_score}/100"
-    )
-
-with metric3:
-    st.metric(
-        "🚨 Total Attacks",
-        total_attacks
-    )
-
-with metric4:
-    st.metric(
-        "🌐 Attacker IPs",
-        unique_attacker_ips
-    )
-
-with metric5:
-    st.metric(
-        "⚠️ Risk Level",
-        risk_level
+    attacker_ips.append(
+        {
+            "IP Address": ip,
+            "Failed Attempts": count,
+            "Risk Level": (
+                "HIGH"
+                if count >= 5
+                else "MEDIUM"
+            )
+        }
     )
 
 
@@ -259,165 +285,144 @@ with metric5:
 # SECURITY STATUS
 # ============================================================
 
-st.markdown("---")
-
 if risk_level == "CRITICAL":
 
-    st.error(
-        "🔴 CRITICAL SECURITY RISK — "
-        "Immediate investigation recommended."
-    )
+    security_status = "🚨 CRITICAL THREATS DETECTED"
 
 elif risk_level == "HIGH":
 
-    st.warning(
-        "🟠 HIGH SECURITY RISK — "
-        "Suspicious activity requires investigation."
-    )
+    security_status = "🔴 HIGH RISK ACTIVITY"
 
 elif risk_level == "MEDIUM":
 
-    st.warning(
-        "🟡 MEDIUM SECURITY RISK — "
-        "Monitor detected suspicious activity."
-    )
+    security_status = "🟠 SUSPICIOUS ACTIVITY"
 
 else:
 
-    st.success(
-        "🟢 SYSTEM STATUS — "
-        "No significant suspicious activity detected."
-    )
+    security_status = "🟢 SYSTEM MONITORING"
 
 
 # ============================================================
-# THREAT SCORE SECTION
+# EXECUTIVE SECURITY OVERVIEW
 # ============================================================
 
-st.markdown("### 🎯 Threat Score")
+st.markdown("---")
 
-score_col1, score_col2 = st.columns([2, 1])
-
-with score_col1:
-
-    st.progress(
-        min(max(threat_score / 100, 0.0), 1.0)
-    )
-
-    st.write(
-        f"Current threat score: **{threat_score}/100**"
-    )
-
-    st.caption(
-        "Higher scores indicate greater detected security risk."
-    )
+st.markdown(
+    "### 🛡️ Security Overview"
+)
 
 
-with score_col2:
+metric1, metric2, metric3, metric4, metric5 = st.columns(5)
+
+
+with metric1:
 
     st.metric(
-        "Current Risk",
+        "Total Logs",
+        len(logs)
+    )
+
+
+with metric2:
+
+    st.metric(
+        "Total Attacks",
+        total_attacks
+    )
+
+
+with metric3:
+
+    st.metric(
+        "Threat Score",
+        f"{threat_score}/100"
+    )
+
+
+with metric4:
+
+    st.metric(
+        "Attacker IPs",
+        len(attacker_ips)
+    )
+
+
+with metric5:
+
+    st.metric(
+        "Risk Level",
         risk_level
     )
 
 
-# ============================================================
-# ATTACK COUNTS
-# ============================================================
-
-attack_counts = {
-    "Brute Force": brute_force_count,
-    "Invalid Users": invalid_user_count,
-    "Root Login": root_attempt_count,
-    "Sudo Abuse": sudo_abuse_count,
-    "Privilege Escalation": privilege_escalation_count
-}
+st.info(
+    f"Security Status: {security_status}"
+)
 
 
 # ============================================================
-# MOST COMMON ATTACK
-# ============================================================
-
-if any(attack_counts.values()):
-
-    most_common_attack = max(
-        attack_counts,
-        key=attack_counts.get
-    )
-
-    most_common_count = attack_counts[
-        most_common_attack
-    ]
-
-else:
-
-    most_common_attack = "None"
-    most_common_count = 0
-
-
-# ============================================================
-# ATTACK DISTRIBUTION
+# ATTACK STATISTICS
 # ============================================================
 
 st.markdown("---")
-st.markdown("### 📊 Attack Distribution")
 
-attack_data = pd.DataFrame({
-    "Attack Type": list(attack_counts.keys()),
-    "Events": list(attack_counts.values())
-})
-
-attack_data_nonzero = attack_data[
-    attack_data["Events"] > 0
-]
+st.markdown(
+    "### 📊 Attack Statistics"
+)
 
 
-if not attack_data_nonzero.empty:
+attack_stats = pd.DataFrame(
+    {
+        "Attack Type": [
+            "Brute Force",
+            "Invalid User",
+            "Root Login",
+            "Sudo Abuse",
+            "Privilege Escalation"
+        ],
+        "Count": [
+            brute_force_count,
+            invalid_user_count,
+            root_count,
+            sudo_count,
+            privilege_count
+        ]
+    }
+)
 
-    chart_col1, chart_col2 = st.columns(2)
 
-    with chart_col1:
+chart_col1, chart_col2 = st.columns(2)
 
-        pie_fig = px.pie(
-            attack_data_nonzero,
-            names="Attack Type",
-            values="Events",
-            hole=0.45,
-            title="Attack Type Distribution"
-        )
 
-        pie_fig.update_layout(
-            margin=dict(t=60, b=20, l=20, r=20)
-        )
+with chart_col1:
 
-        st.plotly_chart(
-            pie_fig,
-            width="stretch"
-        )
+    fig_pie = px.pie(
+        attack_stats,
+        names="Attack Type",
+        values="Count",
+        title="Attack Distribution"
+    )
 
-    with chart_col2:
+    st.plotly_chart(
+        fig_pie,
+        width="content"
+    )
 
-        bar_fig = px.bar(
-            attack_data_nonzero.sort_values(
-                "Events",
-                ascending=True
-            ),
-            x="Events",
-            y="Attack Type",
-            orientation="h",
-            text="Events",
-            title="Detected Attack Events"
-        )
 
-        st.plotly_chart(
-            bar_fig,
-            width="stretch"
-        )
+with chart_col2:
 
-else:
+    fig_bar = px.bar(
+        attack_stats,
+        x="Count",
+        y="Attack Type",
+        orientation="h",
+        title="Attack Frequency"
+    )
 
-    st.success(
-        "🟢 No attack events detected."
+    st.plotly_chart(
+        fig_bar,
+        width="stretch"
     )
 
 
@@ -426,36 +431,36 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.markdown("### 🧠 Attack Intelligence")
 
-intel1, intel2, intel3, intel4 = st.columns(4)
+st.markdown(
+    "### 🎯 Attack Intelligence"
+)
 
-with intel1:
+
+intel_col1, intel_col2, intel_col3 = st.columns(3)
+
+
+with intel_col1:
 
     st.metric(
-        "💥 Total Attacks",
-        total_attacks
+        "Brute Force Sources",
+        brute_force_count
     )
 
-with intel2:
+
+with intel_col2:
 
     st.metric(
-        "🔥 Dominant Attack",
-        most_common_attack
+        "Privilege Escalations",
+        privilege_count
     )
 
-with intel3:
+
+with intel_col3:
 
     st.metric(
-        "📈 Occurrences",
-        most_common_count
-    )
-
-with intel4:
-
-    st.metric(
-        "🌐 Unique IPs",
-        unique_attacker_ips
+        "Sudo Abuse Events",
+        sudo_count
     )
 
 
@@ -464,71 +469,38 @@ with intel4:
 # ============================================================
 
 st.markdown("---")
-st.markdown("### 🚨 Risk Assessment")
 
-risk_factors = []
+st.markdown(
+    "### ⚠️ Risk Assessment"
+)
 
 
-if threat_score >= 70:
+if threat_score >= 80:
 
-    risk_factors.append(
-        "Very high overall threat score."
+    st.error(
+        "Critical risk detected. Immediate investigation "
+        "of authentication and privilege-related activity "
+        "is recommended."
     )
 
+elif threat_score >= 60:
 
-if top_attacker_attempts := (
-    max(results.get("brute_force", {}).values())
-    if results.get("brute_force", {})
-    else 0
-):
-
-    if top_attacker_attempts >= 10:
-
-        risk_factors.append(
-            "Repeated failed login attempts detected from a single IP."
-        )
-
-
-if unique_attacker_ips >= 3:
-
-    risk_factors.append(
-        "Multiple attacker IP addresses detected."
+    st.warning(
+        "High-risk activity detected. Review suspicious "
+        "authentication and privilege events."
     )
 
+elif threat_score >= 30:
 
-if privilege_escalation_count > 0:
-
-    risk_factors.append(
-        "Privilege escalation activity detected."
+    st.warning(
+        "Medium-risk activity detected. Continue monitoring "
+        "and investigate suspicious events."
     )
-
-
-if root_attempt_count > 0:
-
-    risk_factors.append(
-        "Root login activity detected."
-    )
-
-
-if sudo_abuse_count > 0:
-
-    risk_factors.append(
-        "Suspicious sudo activity detected."
-    )
-
-
-if risk_factors:
-
-    for factor in risk_factors:
-
-        st.warning(
-            f"⚠️ {factor}"
-        )
 
 else:
 
     st.success(
-        "🟢 No significant risk factors detected."
+        "No significant high-risk activity detected."
     )
 
 
@@ -536,116 +508,159 @@ else:
 # SOC ANALYST FOCUS
 # ============================================================
 
-st.markdown("### 🛡️ SOC Analyst Focus")
+st.markdown("---")
 
-if risk_level == "CRITICAL":
+st.markdown(
+    "### 🧑‍💻 SOC Analyst Focus"
+)
 
-    st.error(
-        "🔴 Investigate the highest-risk attacker IP, "
-        "review authentication logs, and verify "
-        "whether unauthorized access or privilege "
-        "escalation occurred."
+
+focus_items = []
+
+
+if brute_force:
+
+    focus_items.append(
+        "Investigate repeated failed login attempts."
     )
 
-elif risk_level == "HIGH":
 
-    st.warning(
-        "🟠 Review repeated authentication failures, "
-        "investigate suspicious source IPs, and check "
-        "for unusual privileged activity."
+if invalid_users:
+
+    focus_items.append(
+        "Review invalid username authentication attempts."
     )
 
-elif risk_level == "MEDIUM":
 
-    st.info(
-        "🟡 Monitor authentication activity and "
-        "investigate recurring suspicious events."
+if root_attempts:
+
+    focus_items.append(
+        "Review root account login activity."
     )
 
-else:
 
-    st.success(
-        "🟢 Continue monitoring system activity."
+if sudo_abuse:
+
+    focus_items.append(
+        "Audit privileged command execution."
+    )
+
+
+if privilege_escalation:
+
+    focus_items.append(
+        "Investigate privilege escalation indicators."
+    )
+
+
+if not focus_items:
+
+    focus_items.append(
+        "Continue routine security monitoring."
+    )
+
+
+for item in focus_items:
+
+    st.write(
+        f"• {item}"
     )
 
 
 # ============================================================
-# ALERT DATASET
+# SECURITY ALERTS
 # ============================================================
+
+st.markdown("---")
+
+st.markdown(
+    "### 🚨 Security Alerts"
+)
+
 
 alerts = []
 
 
-# Brute force
-for ip, count in results.get(
-    "brute_force",
-    {}
-).items():
+# ------------------------------------------------------------
+# BRUTE FORCE ALERTS
+# ------------------------------------------------------------
 
-    alerts.append({
-        "Severity": "HIGH",
-        "Type": "Brute Force",
-        "Source": ip,
-        "Message": (
-            f"{ip} -> {count} failed login attempts"
-        )
-    })
+for ip, count in brute_force.items():
 
-
-# Invalid users
-for attack in results.get(
-    "invalid_users",
-    []
-):
-
-    alerts.append({
-        "Severity": "MEDIUM",
-        "Type": "Invalid User",
-        "Source": "Unknown",
-        "Message": str(attack)
-    })
+    alerts.append(
+        {
+            "Severity": "HIGH",
+            "Type": "Brute Force",
+            "Source": ip,
+            "Message": (
+                f"{count} failed login attempts detected"
+            )
+        }
+    )
 
 
-# Root login
-for attack in results.get(
-    "root_attempts",
-    []
-):
+# ------------------------------------------------------------
+# INVALID USER ALERTS
+# ------------------------------------------------------------
 
-    alerts.append({
-        "Severity": "HIGH",
-        "Type": "Root Login",
-        "Source": "Unknown",
-        "Message": str(attack)
-    })
+for attack in invalid_users:
 
-
-# Sudo abuse
-for attack in results.get(
-    "sudo_abuse",
-    []
-):
-
-    alerts.append({
-        "Severity": "HIGH",
-        "Type": "Sudo Abuse",
-        "Source": "Local User",
-        "Message": str(attack)
-    })
+    alerts.append(
+        {
+            "Severity": "MEDIUM",
+            "Type": "Invalid User",
+            "Source": "",
+            "Message": str(attack)
+        }
+    )
 
 
-# Privilege escalation
-for attack in results.get(
-    "privilege_escalation",
-    []
-):
+# ------------------------------------------------------------
+# ROOT LOGIN ALERTS
+# ------------------------------------------------------------
 
-    alerts.append({
-        "Severity": "CRITICAL",
-        "Type": "Privilege Escalation",
-        "Source": "Local User",
-        "Message": str(attack)
-    })
+for attack in root_attempts:
+
+    alerts.append(
+        {
+            "Severity": "HIGH",
+            "Type": "Root Login",
+            "Source": "",
+            "Message": str(attack)
+        }
+    )
+
+
+# ------------------------------------------------------------
+# SUDO ALERTS
+# ------------------------------------------------------------
+
+for attack in sudo_abuse:
+
+    alerts.append(
+        {
+            "Severity": "HIGH",
+            "Type": "Sudo Abuse",
+            "Source": "",
+            "Message": str(attack)
+        }
+    )
+
+
+# ------------------------------------------------------------
+# PRIVILEGE ESCALATION ALERTS
+# ------------------------------------------------------------
+
+for attack in privilege_escalation:
+
+    alerts.append(
+        {
+            "Severity": "CRITICAL",
+            "Type": "Privilege Escalation",
+            "Source": "",
+            "Message": str(attack)
+        }
+    )
 
 
 alerts_df = pd.DataFrame(
@@ -660,7 +675,7 @@ alerts_df = pd.DataFrame(
 
 
 # ============================================================
-# APPLY ALERT FILTERS
+# ALERT FILTERING
 # ============================================================
 
 filtered_alerts = alerts_df.copy()
@@ -671,46 +686,38 @@ if not filtered_alerts.empty:
     if severity_filter != "All":
 
         filtered_alerts = filtered_alerts[
-            filtered_alerts["Severity"] == severity_filter
+            filtered_alerts["Severity"]
+            == severity_filter
         ]
 
 
-    if search_term:
+    if search_query:
 
-        search_mask = (
-            filtered_alerts["Message"]
-            .str.contains(
-                search_term,
-                case=False,
-                na=False
-            )
-            |
-            filtered_alerts["Source"]
-            .str.contains(
-                search_term,
-                case=False,
-                na=False
-            )
-            |
-            filtered_alerts["Type"]
-            .str.contains(
-                search_term,
-                case=False,
-                na=False
-            )
-        )
+        search_text = search_query.lower()
 
         filtered_alerts = filtered_alerts[
-            search_mask
+            filtered_alerts[
+                [
+                    "Message",
+                    "Source",
+                    "Type"
+                ]
+            ]
+            .astype(str)
+            .apply(
+                lambda row:
+                row.str.lower()
+                .str.contains(
+                    search_text
+                ).any(),
+                axis=1
+            )
         ]
 
 
 # ============================================================
-# SECURITY ALERTS
+# DISPLAY ALERTS
 # ============================================================
-
-st.markdown("---")
-st.markdown("### 🚨 Security Alerts")
 
 st.metric(
     "Displayed Alerts",
@@ -737,13 +744,18 @@ else:
 # EXPORT ALERTS
 # ============================================================
 
-st.markdown("### 📥 Export Alerts")
+st.markdown("---")
+
+st.markdown(
+    "### 📥 Export Alerts"
+)
+
 
 if not filtered_alerts.empty:
 
     csv_data = filtered_alerts.to_csv(
         index=False
-    ).encode("utf-8")
+    )
 
     st.download_button(
         label="📥 Download Alerts as CSV",
@@ -763,39 +775,30 @@ else:
 # SEVERITY DISTRIBUTION
 # ============================================================
 
-st.markdown("---")
-st.markdown("### 🚦 Alert Severity Distribution")
-
 if not filtered_alerts.empty:
 
-    severity_data = (
+    severity_counts = (
         filtered_alerts["Severity"]
         .value_counts()
         .reset_index()
     )
 
-    severity_data.columns = [
+    severity_counts.columns = [
         "Severity",
         "Count"
     ]
 
-    severity_fig = px.bar(
-        severity_data,
+
+    fig_severity = px.bar(
+        severity_counts,
         x="Severity",
         y="Count",
-        text="Count",
         title="Security Alerts by Severity"
     )
 
     st.plotly_chart(
-        severity_fig,
+        fig_severity,
         width="stretch"
-    )
-
-else:
-
-    st.info(
-        "No alert data available for severity analysis."
     )
 
 
@@ -804,97 +807,41 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.markdown("### 🕵️ Threat Intelligence")
 
-attacker_ips = []
-
-
-for ip, count in results.get(
-    "brute_force",
-    {}
-).items():
-
-    if count >= 10:
-
-        risk = "CRITICAL"
-
-    elif count >= 5:
-
-        risk = "HIGH"
-
-    elif count >= 3:
-
-        risk = "MEDIUM"
-
-    else:
-
-        risk = "LOW"
-
-
-    attacker_ips.append({
-        "IP Address": ip,
-        "Failed Attempts": count,
-        "Risk Level": risk
-    })
+st.markdown(
+    "### 🌐 Threat Intelligence"
+)
 
 
 if attacker_ips:
 
-    threat_df = pd.DataFrame(
+    intelligence_df = pd.DataFrame(
         attacker_ips
     )
 
-    threat_df = threat_df.sort_values(
-        by="Failed Attempts",
-        ascending=False
-    )
-
     st.dataframe(
-        threat_df,
+        intelligence_df,
         width="stretch",
         hide_index=True
     )
 
-else:
 
-    st.success(
-        "🟢 No attacker IPs detected."
-    )
-
-
-# ============================================================
-# TOP ATTACKER IPS
-# ============================================================
-
-st.markdown("---")
-st.markdown("### 🌐 Top Attacker IPs")
-
-if attacker_ips:
-
-    top_ips_df = pd.DataFrame(
-        attacker_ips
-    ).sort_values(
-        by="Failed Attempts",
-        ascending=False
-    ).head(10)
-
-    attacker_fig = px.bar(
-        top_ips_df,
+    fig_attackers = px.bar(
+        intelligence_df,
         x="IP Address",
         y="Failed Attempts",
-        text="Failed Attempts",
-        title="Top 10 Attacker IPs"
+        title="Top Attacker IPs"
     )
 
     st.plotly_chart(
-        attacker_fig,
+        fig_attackers,
         width="stretch"
     )
 
 else:
 
     st.info(
-        "No attacker IPs available."
+        "No attacker IPs identified."
     )
 
 
@@ -903,67 +850,94 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.markdown("### 📈 Threat Activity Timeline")
 
-if logs:
+st.markdown(
+    "### 🕒 Threat Activity Timeline"
+)
 
-    timeline_df = pd.DataFrame(logs)
 
-    if "timestamp" in timeline_df.columns:
+timeline_data = []
 
-        timeline_df["timestamp"] = pd.to_datetime(
-            timeline_df["timestamp"],
-            errors="coerce"
+
+for log in logs:
+
+    if isinstance(log, dict):
+
+        timestamp = (
+            log.get("timestamp")
+            or log.get("time")
+            or log.get("date")
         )
 
-        timeline_df = timeline_df.dropna(
-            subset=["timestamp"]
+        message = (
+            log.get("message")
+            or log.get("raw")
+            or str(log)
         )
 
-        if not timeline_df.empty:
+        if timestamp:
 
-            activity = (
-                timeline_df
-                .set_index("timestamp")
-                .resample("h")
-                .size()
-                .reset_index(name="Events")
+            timeline_data.append(
+                {
+                    "timestamp": timestamp,
+                    "message": message
+                }
             )
 
-            timeline_fig = px.line(
-                activity,
-                x="timestamp",
-                y="Events",
-                markers=True,
-                title="Log Activity Over Time"
-            )
 
-            timeline_fig.update_layout(
-                xaxis_title="Time",
-                yaxis_title="Events"
-            )
+if timeline_data:
 
-            st.plotly_chart(
-                timeline_fig,
-                width="stretch"
-            )
+    timeline_df = pd.DataFrame(
+        timeline_data
+    )
 
-        else:
+    timeline_df["timestamp"] = pd.to_datetime(
+    timeline_df["timestamp"],
+    format="mixed",
+    errors="coerce"
+)
 
-            st.info(
-                "No valid timestamps available."
+    timeline_df = timeline_df.dropna(
+        subset=["timestamp"]
+    )
+
+
+    if not timeline_df.empty:
+
+        timeline_counts = (
+            timeline_df
+            .set_index("timestamp")
+            .resample("h")
+            .size()
+            .reset_index(
+                name="Events"
             )
+        )
+
+
+        fig_timeline = px.line(
+            timeline_counts,
+            x="timestamp",
+            y="Events",
+            markers=True,
+            title="Threat Activity Over Time"
+        )
+
+        st.plotly_chart(
+            fig_timeline,
+            width="stretch"
+        )
 
     else:
 
         st.info(
-            "Timestamp field not available."
+            "No valid timestamps available."
         )
 
 else:
 
     st.info(
-        "No logs available."
+        "Timestamp field not available."
     )
 
 
@@ -972,7 +946,11 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.markdown("### 🔎 IP Investigation")
+
+st.markdown(
+    "### 🔎 IP Investigation"
+)
+
 
 if attacker_ips:
 
@@ -980,16 +958,23 @@ if attacker_ips:
         attacker_ips
     )
 
+
     selected_ip = st.selectbox(
         "Select an IP address to investigate",
-        investigation_df["IP Address"].tolist()
+        investigation_df[
+            "IP Address"
+        ].tolist()
     )
 
+
     selected_data = investigation_df[
-        investigation_df["IP Address"] == selected_ip
+        investigation_df["IP Address"]
+        == selected_ip
     ].iloc[0]
 
+
     ip_col1, ip_col2, ip_col3 = st.columns(3)
+
 
     with ip_col1:
 
@@ -998,25 +983,37 @@ if attacker_ips:
             selected_ip
         )
 
+
     with ip_col2:
 
         st.metric(
-            "🔐 Failed Attempts",
-            int(selected_data["Failed Attempts"])
+            "Failed Attempts",
+            selected_data[
+                "Failed Attempts"
+            ]
         )
+
 
     with ip_col3:
 
         st.metric(
-            "⚠️ Risk Level",
-            selected_data["Risk Level"]
+            "Risk Level",
+            selected_data[
+                "Risk Level"
+            ]
         )
 
-    st.markdown("#### 📋 Related Alerts")
+
+    st.markdown(
+        "#### 📋 Related Alerts"
+    )
+
 
     ip_alerts = alerts_df[
-        alerts_df["Source"] == selected_ip
+        alerts_df["Source"]
+        == selected_ip
     ]
+
 
     if not ip_alerts.empty:
 
@@ -1044,11 +1041,18 @@ else:
 # ============================================================
 
 st.markdown("---")
-st.markdown("### 📜 Recent Log Entries")
+
+st.markdown(
+    "### 📜 Recent Log Entries"
+)
+
 
 if logs:
 
-    log_df = pd.DataFrame(logs)
+    log_df = pd.DataFrame(
+        logs
+    )
+
 
     st.dataframe(
         log_df,
@@ -1064,6 +1068,105 @@ else:
 
 
 # ============================================================
+# SECURITY REPORT CENTER
+# ============================================================
+
+st.markdown("---")
+
+st.markdown(
+    "### 📄 Security Report Center"
+)
+
+st.write(
+    "Generate and download a professional security incident "
+    "report based on the current log analysis."
+)
+
+
+if st.button(
+    "📄 Generate Security Report",
+    width="stretch"
+):
+
+    try:
+
+        # ----------------------------------------------------
+        # GENERATE REPORT
+        # ----------------------------------------------------
+
+        report_path = generate_pdf_report(
+
+            total_logs=len(logs),
+
+            threat_score=threat_score,
+
+            high_threats=(
+                len(brute_force)
+                + len(root_attempts)
+                + len(sudo_abuse)
+            ),
+
+            medium_threats=len(
+                invalid_users
+            ),
+
+            total_attacks=total_attacks,
+
+            risk_level=risk_level,
+
+            brute_force=brute_force,
+
+            invalid_users=invalid_users,
+
+            root_attempts=root_attempts,
+
+            sudo_abuse=sudo_abuse,
+
+            privilege_escalation=(
+                privilege_escalation
+            )
+        )
+
+
+        st.success(
+            "✅ Security report generated successfully."
+        )
+
+
+        # ----------------------------------------------------
+        # PDF DOWNLOAD
+        # ----------------------------------------------------
+
+        with open(
+            report_path,
+            "rb"
+        ) as pdf_file:
+
+            pdf_data = pdf_file.read()
+
+
+        st.download_button(
+
+            label="⬇️ Download Security Report PDF",
+
+            data=pdf_data,
+
+            file_name="security_report.pdf",
+
+            mime="application/pdf",
+
+            width="stretch"
+        )
+
+
+    except Exception as error:
+
+        st.error(
+            f"Unable to generate security report: {error}"
+        )
+
+
+# ============================================================
 # FOOTER
 # ============================================================
 
@@ -1073,5 +1176,5 @@ st.caption(
     "AI Linux Log Analyzer | "
     "SOC Dashboard | "
     "Cybersecurity Monitoring Platform | "
-    "Day 18"
+    "Day 19"
 )

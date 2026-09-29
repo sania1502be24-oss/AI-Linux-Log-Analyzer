@@ -1,267 +1,195 @@
 # AI Linux Log Analyzer
 
-AI Linux Log Analyzer is a cybersecurity-focused project that analyzes Linux authentication logs (`auth.log`) to identify suspicious activities, calculate threat scores, and generate automated security reports.
+### Security Log Analysis, Threat Scoring & Incident Investigation
 
-The project is designed to simulate real-world Security Operations Center (SOC) workflows by detecting common attack patterns such as brute-force attacks, invalid user enumeration, root logins, sudo abuse, and privilege escalation attempts.
+An interactive cybersecurity project built with Python and Streamlit to analyze Linux authentication logs, identify suspicious activity, summarize potential security threats, and generate incident reports.
 
----
+**Live Demo:** [Launch AI Linux Log Analyzer](https://ai-linux-log-analyzer-ewupnu3bljznscwksuyzn9.streamlit.app/)
 
-## Features
-
-### Log Parsing
-- Parses Linux authentication logs (`auth.log`)
-- Extracts timestamps, services, and log messages
-- Handles multiple log entries efficiently
-
-### Threat Detection
-- Failed Login Detection
-- Brute Force Attack Detection
-- Invalid User Detection
-- Root Login Detection
-- Sudo Abuse Detection
-- Privilege Escalation Detection
-
-### Threat Scoring
-- Calculates an overall threat score (0–100)
-- Weighs threats based on severity
-- Helps prioritize security incidents
-
-### Automated Security Reports
-- Generates detailed security reports
-- Categorizes threats by severity
-- Summarizes attack activity
-- Stores reports in a dedicated reports directory
+**Source Code:** [GitHub Repository](https://github.com/sania1502be24-oss/AI-Linux-Log-Analyzer)
 
 ---
 
-## Detected Attack Types
+## Overview
 
-| Attack Type | Severity |
-|------------|------------|
-| Failed Login Attempts | Medium |
-| Brute Force Attacks | High |
-| Invalid User Enumeration | Medium |
-| Root Login Attempts | High |
-| Sudo Abuse | High |
-| Privilege Escalation | Critical |
+AI Linux Log Analyzer is a security log analysis dashboard designed to help users examine Linux authentication logs and investigate potentially suspicious events.
 
----
+The application parses log entries, identifies suspicious authentication activity using detection rules, calculates a threat score, presents investigation summaries, and supports exporting alerts and PDF security reports.
 
-## Example Detected Activities
+The project demonstrates practical skills in Python development, security log analysis, data visualization, incident investigation, and deployment.
 
-```text
-Failed password for root from 192.168.1.100
-Invalid user admin from 192.168.1.150
-Accepted password for root from 192.168.1.250
-user sania executed sudo su
-user admin executed sudo -i
-usermod -aG sudo test
-chmod 777 /etc/passwd
-```
+## Key Features
 
----
+* **Linux Log Parsing:** Processes supported authentication log entries into structured records.
+* **Suspicious Activity Detection:** Identifies suspicious authentication patterns and other configured security events.
+* **Threat Scoring:** Calculates a threat score to summarize the risk indicated by analyzed log activity.
+* **Security Dashboard:** Displays security metrics, threat summaries, and visualizations.
+* **Incident Investigation:** Presents incident summaries, evidence timelines, and investigation guidance.
+* **Attacker IP Analysis:** Helps review IP addresses associated with suspicious log activity.
+* **Threat Intelligence View:** Displays available threat intelligence information within the dashboard.
+* **Alert Filtering:** Review recent alerts and filter results to investigate relevant events.
+* **CSV Export:** Export alert data for further analysis.
+* **PDF Security Reports:** Generate and download security incident reports.
+* **Interactive Interface:** Explore analysis results through a Streamlit web dashboard.
+
+## Screenshots
+
+The following screenshots can be added to the repository to demonstrate the application's main features.
+
+### 1. Security Dashboard
+
+![AI Linux Log Analyzer Dashboard](screenshots/dashboard.png)
+
+### 2. Incident Investigation
+
+![Incident Investigation and Evidence Timeline](screenshots/incident-investigation.png)
+
+### 3. Security Report
+
+![Security Incident Report](screenshots/security-report.png)
+
+> Add your actual application screenshots to the `screenshots/` directory using the filenames above.
+
+## Technology Stack
+
+| Technology                | Purpose                                 |
+| ------------------------- | --------------------------------------- |
+| Python                    | Core application and log analysis       |
+| Streamlit                 | Interactive web dashboard               |
+| Pandas                    | Structured data processing              |
+| Plotly                    | Interactive data visualization          |
+| ReportLab                 | PDF report generation                   |
+| Git and GitHub            | Version control and source code hosting |
+| Streamlit Community Cloud | Application deployment                  |
 
 ## Project Structure
 
 ```text
 AI-Linux-Log-Analyzer/
-│
-├── data/
-│   └── auth.log
-│
-├── reports/
-│   └── security_report.txt
-│
-├── src/
-│   ├── main.py
-│   ├── parser.py
-│   ├── detector.py
-│   ├── reporter.py
-│   └── threat_score.py
-│
+├── dashboard.py
 ├── requirements.txt
 ├── README.md
-└── .gitignore
+├── data/
+│   └── auth.log
+├── reports/
+│   ├── security_report.pdf
+│   └── security_report.txt
+└── src/
+    ├── parser.py
+    ├── detector.py
+    ├── threat_score.py
+    ├── bruteforce_detector.py
+    ├── incident_investigator.py
+    ├── pdf_report.py
+    ├── reporter.py
+    ├── email_alert.py
+    └── threat_intelligence.py
 ```
 
----
+*The tree highlights the main project files; the complete repository may contain additional files.*
 
-## Installation
+## Getting Started
 
-### Clone Repository
+### Prerequisites
+
+* Python 3.13 or another compatible Python version
+* Git
+* pip
+* A web browser
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/sania1502be24-oss/AI-Linux-Log-Analyzer.git
 cd AI-Linux-Log-Analyzer
 ```
 
-### Create Virtual Environment
+### 2. Create a virtual environment
 
-```bash
+**Windows PowerShell:**
+
+```powershell
 python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 ```
 
-### Activate Virtual Environment
+If PowerShell blocks environment activation, you can use the environment's Python executable directly.
 
-#### Windows
+### 3. Install dependencies
 
-```bash
-.venv\Scripts\activate
+```powershell
+python -m pip install -r requirements.txt
 ```
 
-#### Linux / macOS
+### 4. Launch the dashboard
 
-```bash
-source .venv/bin/activate
+```powershell
+python -m streamlit run dashboard.py
 ```
 
-### Install Dependencies
+Open the local URL displayed in your terminal, typically `http://localhost:8501`.
 
-```bash
-pip install -r requirements.txt
-```
+## How to Use
 
----
+1. Open the dashboard.
+2. Review the available log analysis results and security metrics.
+3. Examine suspicious activity and threat summaries.
+4. Use the incident investigation section to review relevant evidence and timelines.
+5. Inspect alert records and associated IP information.
+6. Export alert data to CSV when needed.
+7. Generate and download a PDF security incident report.
 
-## Usage
+The exact results depend on the log data available to the application.
 
-Run the analyzer:
+## Deployment
 
-```bash
-python src/main.py
-```
+The application is deployed using Streamlit Community Cloud.
 
----
+**Live Application:** [AI Linux Log Analyzer](https://ai-linux-log-analyzer-ewupnu3bljznscwksuyzn9.streamlit.app/)
 
-## Sample Output
+**Deployment Platform:** Streamlit Community Cloud
 
-```text
-Total Logs Parsed: 20
+## Limitations
 
-Overall Threat Score: 100/100
+* Detection results depend on the supported log format, available data, and configured detection rules.
+* A high threat score indicates suspicious patterns according to the application's scoring logic; it does not prove that a system has been compromised.
+* IP analysis and threat intelligence results depend on the information available to the application.
+* The project is an educational and portfolio-oriented security analysis tool, not a replacement for a production SIEM or a complete incident response platform.
+* Detection accuracy, false positives, and false negatives require further testing against diverse real-world logs.
+* The separate experimental Isolation Forest anomaly detector is not documented as an integrated, verified dashboard feature.
+* Email alert delivery depends on valid configuration and a working email service.
 
-=== BRUTE FORCE ATTEMPTS ===
-[HIGH] 192.168.1.100 -> 6 failed attempts
+## Future Improvements
 
-=== INVALID USER ATTACKS ===
-[MEDIUM] Invalid user admin from 192.168.1.150
-[MEDIUM] Invalid user test from 192.168.1.151
+* Integrate and validate machine-learning-based anomaly detection.
+* Expand log-format support and test against additional Linux distributions.
+* Add automated unit and integration tests.
+* Improve detection evaluation with labeled datasets and false-positive analysis.
+* Enhance threat intelligence enrichment and investigation workflows.
+* Add authentication, access controls, and operational monitoring if the application is developed for production use.
 
-=== ROOT LOGIN ATTEMPTS ===
-[HIGH] Accepted password for root from 192.168.1.250 port 22 ssh2
+## Learning Outcomes
 
-=== SUDO ABUSE ATTEMPTS ===
-[HIGH] user sania executed sudo su
-[HIGH] user admin executed sudo -i
-[HIGH] user test executed sudo bash
+This project provided practical experience with:
 
-=== PRIVILEGE ESCALATION ATTEMPTS ===
-[CRITICAL] sania executed su root
-[CRITICAL] usermod -aG sudo test
-[CRITICAL] chmod 777 /etc/passwd
-```
-
----
-
-## Threat Scoring Logic
-
-| Threat Type | Score |
-|------------|--------|
-| Failed Login (Brute Force) | 10 per attempt |
-| Invalid User | 5 each |
-| Root Login | 25 each |
-| Sudo Abuse | 15 each |
-| Privilege Escalation | 20 each |
-
-Maximum Threat Score = **100**
-
----
-
-## Security Report Example
-
-The tool automatically generates:
-
-```text
-reports/security_report.txt
-```
-
-Example sections:
-
-```text
-THREAT SUMMARY
-BRUTE FORCE ATTACKS
-INVALID USER ATTACKS
-ROOT LOGIN ATTEMPTS
-SUDO ABUSE ATTEMPTS
-PRIVILEGE ESCALATION ATTEMPTS
-```
-
----
-
-## Development Progress
-
-### Completed
-
-- ✅ Day 1: Project Setup
-- ✅ Day 2: Log Parsing Engine
-- ✅ Day 3: Failed Login Detection
-- ✅ Day 4: Brute Force Detection
-- ✅ Day 5: Automated Security Reports
-- ✅ Day 6: Root Login Detection & Threat Scoring
-- ✅ Day 7: Sudo Abuse Detection
-- ✅ Day 8: Privilege Escalation Detection
-
----
-
-## Upcoming Features
-
-### Detection Enhancements
-- Suspicious IP Intelligence
-- Attack Frequency Analysis
-- Attacker Ranking
-
-### AI Features
-- AI Incident Summary
-- AI-Based Risk Recommendations
-- Threat Prioritization
-
-### Dashboard
-- Interactive Web Dashboard
-- Threat Visualizations
-- Charts and Analytics
-- Real-Time Monitoring
-
-### Deployment
-- FastAPI Backend
-- Docker Support
-- Cloud Deployment
-
----
-
-## Skills Demonstrated
-
-- Python
-- Cybersecurity
-- Log Analysis
-- Threat Detection
-- Incident Response
-- SOC Workflows
-- Security Automation
-- Report Generation
-- Risk Assessment
-
----
+* Python application development
+* Linux authentication log analysis
+* Security event detection and threat scoring
+* Incident investigation workflows
+* Interactive dashboards and data visualization
+* CSV and PDF report generation
+* Git, GitHub, and cloud deployment
 
 ## Author
 
-**Sania Mittal**  
-B.E. Computer Science Engineering (Cybersecurity)  
-Chitkara University
+**Sania Mittal**
 
-GitHub: https://github.com/sania1502be24-oss
+Cybersecurity-focused Computer Science student interested in threat detection, security analytics, incident investigation, and secure software development.
+
+* **GitHub:** [sania1502be24-oss](https://github.com/sania1502be24-oss)
+* **Project Repository:** [AI Linux Log Analyzer](https://github.com/sania1502be24-oss/AI-Linux-Log-Analyzer)
+* **Live Demo:** [Open Application](https://ai-linux-log-analyzer-ewupnu3bljznscwksuyzn9.streamlit.app/)
 
 ---
 
-## License
-
-This project is developed for educational and cybersecurity learning purposes.
+*Built as a hands-on cybersecurity project for learning, experimentation, and portfolio demonstration.*
